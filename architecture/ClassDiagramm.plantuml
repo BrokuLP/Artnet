@@ -1,0 +1,19 @@
+@startuml classDiagram
+
+class "Artnet" as cl_artnet
+class "ArtnetNode" as cl_node
+class "ArtnetController" as cl_controller
+class "ArtnetMedia" as cl_media
+class "ArtnetRoute" as cl_route
+class "ArtnetBackup" as cl_backup
+class "ArtnetConfig" as cl_config
+class "ArtnetVisual" as cl_visual
+
+cl_artnet --|> cl_node
+cl_artnet --|> cl_controller
+cl_artnet --|> cl_media
+cl_artnet --|> cl_route
+cl_artnet --|> cl_backup
+cl_artnet --|> cl_config
+cl_artnet --|> cl_visual
+@enduml
