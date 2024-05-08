@@ -1,6 +1,9 @@
 @startuml classDiagram
 
-class "Artnet" as cl_artnet
+abstract class "Artnet" as cl_artnet {
+    
+    
+}
 class "ArtnetNode" as cl_node
 class "ArtnetController" as cl_controller
 class "ArtnetMedia" as cl_media
@@ -9,6 +12,69 @@ class "ArtnetBackup" as cl_backup
 class "ArtnetConfig" as cl_config
 class "ArtnetVisual" as cl_visual
 
+struct "ArtPoll" as pkt_artpoll
+struct "ArtPollReply" as pkt_artpollreply
+struct "ArtIpProg" as pkt_artipprog
+struct "ArtIpProgReply" as pkt_artipprogreply
+struct "ArtAddress" as pkt_artaddress
+struct "ArtDataRequest" as pkt_artdatarequest
+struct "ArtDataReply" as pkt_artdatareply
+struct "ArtDiagData" as pkt_artdiagdata
+struct "ArtTimeCode" as pkt_arttimecode
+struct "ArtCommand" as pkt_artcommand
+struct "ArtTrigger" as pkt_arttrigger
+struct "ArtDMX" as pkt_artdmx{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpNzs
+    uint16_t ProtVer
+    uint8_t Sequence
+    uint8_t Physical
+    uint8_t SubUni
+    uint8_t Net
+    uint16_t Length
+    uint8_t Data[Length]
+}
+struct "ArtSync" as pkt_artsync{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpNzs
+    uint16_t ProtVer
+    uint8_t Aux1 = 0
+    uint8_t Aux2 = 0
+}
+struct "ArtNzs" as pkt_artnzs{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpNzs
+    uint16_t ProtVer
+    uint8_t Sequence
+    uint8_t StartCode
+    uint8_t SubUni
+    uint8_t Net
+    uint16_t Length
+    uint8_t Data[Length]
+}
+struct "ArtVlc" as pkt_artvlc{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpNzs
+    uint16_t ProtVer
+    uint8_t Sequence
+    uint8_t StartCode
+    uint8_t SubUni
+    uint8_t Net
+    uint16_t Length
+    uint8_t Vlc[Length]
+}
+struct "ArtInput" as pkt_artinput{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpNzs
+    uint16_t ProtVer
+    uint8_t Filler
+    uint8_t BindIndex
+    uint16_t NumPorts
+    uint8_t Input[8] TODO: bitmapping
+}
+
+
+
 cl_artnet --|> cl_node
 cl_artnet --|> cl_controller
 cl_artnet --|> cl_media
@@ -16,4 +82,26 @@ cl_artnet --|> cl_route
 cl_artnet --|> cl_backup
 cl_artnet --|> cl_config
 cl_artnet --|> cl_visual
+
+
+cl_artnet *-u- pkt_artpoll : contains
+cl_artnet *-u- pkt_artpollreply : contains
+cl_artnet *-u- pkt_artipprog : contains
+cl_artnet *-u- pkt_artipprogreply : contains
+cl_artnet *-u- pkt_artaddress : contains
+cl_artnet *-u- pkt_artdatarequest : contains
+cl_artnet *-u- pkt_artdatareply : contains
+cl_artnet *-u- pkt_artdiagdata : contains
+cl_artnet *-u- pkt_arttimecode : contains
+cl_artnet *-u- pkt_artcommand : contains
+cl_artnet *-u- pkt_arttrigger : contains
+cl_artnet *-u- pkt_arttrigger : contains
+cl_artnet *-u- pkt_artdmx : contains
+cl_artnet *-u- pkt_artsync : contains
+cl_artnet *-u- pkt_artnzs : contains
+cl_artnet *-u- pkt_artvlc : contains
+cl_artnet *-u- pkt_artinput : contains
+
+
+
 @enduml
