@@ -16,17 +16,36 @@ state "Init" as systemInit{
 state "Idle" as systemIdle{
 
 }
+systemIdle : waiting for packets
 state "packet processing" as packetProc{
 
 }
 state "configuring" as systemConf{
 
 }
+state "error" as syserror{
+    state "log error" as syserror_log
+    state "attempt fix" as syserror_fix
+
+    [*] -d-> syserror_log
+    syserror_log -d-> syserror_fix
+    syserror_fix -d-> [*] : fixed or max retry
+    syserror_fix -> syserror_fix : retry
+
+    
+}
 
 [*]  -> systemInit
 systemInit -> systemConf
 systemConf -> systemIdle
 systemIdle -> packetProc
+
+
+systemInit -d-> syserror
+systemConf -d-> syserror
+systemIdle -d-> syserror
+packetProc -d-> syserror
+syserror -d-> [*] : if error ist not correctable terminate
 
 
 
