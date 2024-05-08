@@ -1,0 +1,22 @@
+@startuml StateDiagramm
+state "Init" as systemInit{
+
+}
+state "Idle" as systemIdle{
+
+}
+state "packet processing" as packetProc{
+
+}
+state "configuring" as systemConf{
+
+}
+
+[*]  -> systemInit
+systemInit -> systemConf
+systemConf -> systemIdle
+systemIdle -> packetProc
+
+
+
+@enduml
