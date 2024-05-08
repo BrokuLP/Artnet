@@ -1,9 +1,17 @@
 @startuml StateDiagramm
 state "Init" as systemInit{
     state "get MAC" as sysinit_getmac
-    state "calc IP" as sysinit_calcip
+    state "calc default IP" as sysinit_calcdefip
     state "set callback functions" as sysinit_setcbfunc
+    state "set system mode" as sysinit_setsysmode
+    sysinit_setsysmode : NODE 
+    sysinit_setsysmode : CONTROLLER
 
+    [*] -d-> sysinit_getmac
+    sysinit_getmac -d-> sysinit_calcdefip
+    sysinit_calcdefip -d-> sysinit_setsysmode
+    sysinit_setsysmode -d-> sysinit_setcbfunc
+    sysinit_setcbfunc -d-> [*]
 }
 state "Idle" as systemIdle{
 
