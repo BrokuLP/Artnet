@@ -15,14 +15,84 @@ class "ArtnetVisual" as cl_visual
 struct "ArtPoll" as pkt_artpoll
 struct "ArtPollReply" as pkt_artpollreply
 struct "ArtIpProg" as pkt_artipprog
-struct "ArtIpProgReply" as pkt_artipprogreply
-struct "ArtAddress" as pkt_artaddress
-struct "ArtDataRequest" as pkt_artdatarequest
-struct "ArtDataReply" as pkt_artdatareply
-struct "ArtDiagData" as pkt_artdiagdata
-struct "ArtTimeCode" as pkt_arttimecode
-struct "ArtCommand" as pkt_artcommand
-struct "ArtTrigger" as pkt_arttrigger
+struct "ArtIpProgReply" as pkt_artipprogreply{
+    
+}
+struct "ArtAddress" as pkt_artaddress{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpAddress
+    uint16_t ProtVer
+    uint8_t NetSwitch
+    uint8_t BindIndex
+    uint8_t PortName[18]
+    uint8_t LongName[64]
+    uint8_t SwIn[4]
+    uint8_t SwOut[4]
+    uint8_t SubSwitch
+    uint8_t AcnPriority
+    uint8_t Command
+}
+struct "ArtDataRequest" as pkt_artdatarequest{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpDataRequest
+    uint16_t ProtVer
+    uint16_t EstaMan
+    uint16_t Oem
+    uint16_t Request
+    uint8_t Spare[22]
+}
+struct "ArtDataReply" as pkt_artdatareply{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpDataReply
+    uint16_t ProtVer
+    uint16_t EstaMan
+    uint16_t Oem
+    uint16_t Request
+    uint16_t PayLen
+    uint8_t Payload[0-512]
+}
+struct "ArtDiagData" as pkt_artdiagdata{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpDiagData
+    uint16_t ProtVer
+    uint8_t Filler1
+    uint8_t DiagPriority
+    uint8_t LogicalPort
+    uint8_t Filler3
+    uint16_t Length
+    uint8_t Data[Length]
+}
+struct "ArtTimeCode" as pkt_arttimecode{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpTimeCode
+    uint16_t ProtVer
+    uint8_t Filler1
+    uint8_t Filler2
+    uint8_t Frames
+    uint8_t Seconds
+    uint8_t Minutes
+    uint8_t Hours
+    uint8_t Type
+}
+struct "ArtCommand" as pkt_artcommand{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpCommand
+    uint16_t ProtVer
+    uint16_t EstaMan
+    uint16_t Length
+    uint8_t Data[Length]
+}
+struct "ArtTrigger" as pkt_arttrigger{
+    uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
+    uint16_t OpCode = OpTrigger
+    uint16_t ProtVer
+    uint8_t Filler1
+    uint8_t Filler2
+    uint16_t Oem
+    uint8_t Key
+    uint8_t SubKey
+    uint8_t Data[512]
+}
 struct "ArtDMX" as pkt_artdmx{
     uint8_t ID[8] = 'A''r''t''-''N''e''t''0x00'
     uint16_t OpCode = OpNzs
