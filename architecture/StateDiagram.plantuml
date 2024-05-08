@@ -1,5 +1,8 @@
 @startuml StateDiagramm
 state "Init" as systemInit{
+    state "get MAC" as sysinit_getmac
+    state "calc IP" as sysinit_calcip
+    state "set callback functions" as sysinit_setcbfunc
 
 }
 state "Idle" as systemIdle{
