@@ -1,51 +1,109 @@
-@startuml StateDiagramm
-state "Init" as systemInit{
-    state "get MAC" as sysinit_getmac
-    state "calc default IP" as sysinit_calcdefip
-    state "set callback functions" as sysinit_setcbfunc
-    state "set system mode" as sysinit_setsysmode
-    sysinit_setsysmode : NODE 
-    sysinit_setsysmode : CONTROLLER
+@startuml ArtNetNode
 
-    [*] -d-> sysinit_getmac
-    sysinit_getmac -d-> sysinit_calcdefip
-    sysinit_calcdefip -d-> sysinit_setsysmode
-    sysinit_setsysmode -d-> sysinit_setcbfunc
-    sysinit_setcbfunc -d-> [*]
-}
-state "Idle" as systemIdle{
+    start
+    partition init{
+        :set default ip;
+        :set MAC;
+        :set StyleCode = StNode (0x00);
+    }
+    partition config{
 
-}
-systemIdle : waiting for packets
-state "packet processing" as packetProc{
+    }
+    (A)
+    note right : idle state
+    if(incoming packet) then (true)
+        :decode header;
+        if (isArtnetPacket?) then (false)
+            :discard packet;
+            (A)
+            detach
+        else (true)
+        endif
+        partition "handle incoming packets"{
+            note
+                ignored packets:
+                ----------------
+                ArtDiagData 
+                ArtDataReply  
+                ArtPollReply
+                ArtIpProgReply
+                ArtVlc
+            end note
+            switch (OpCode)
+                case (ArtPoll)
+                    :decode Packet;
+                    :send ArtPollReply;
+                case (ArtIpProg)
+                    :decode packet;
+                    :act on packet;
+                    :send ArtIpProgReply to controller;
+                case (ArtAddress)
+                    :decode packet;
+                    :act on packet;
+                    :send ArtPollReply as unicast;
+                case (ArtDataRequest)
+                    :decode packet;
+                    :act on packet;
+                    :send ArtDataReply as unicast;
+                case (ArtTimeCode)
+                    :decode packet;
+                    :callback_artTimeCode;<<output>>
+                case (ArtCommand)
+                    :decode packet;
+                    :callback_artCommand;<<output>>
+                case (ArtTrigger)
+                    :decode packet;
+                    :callback_artTrigger;<<output>>
+                case (ArtDmx)
+                    :decode packet;
+                    :packet merging;
+                    :callback_artDmx();<<output>>
+                case (ArtSync)
+                    partition "_handleArtSync"{
+                        if (_merging) then (true)
+                            :discard packet;
+                            (A)
+                            detach
+                        endif
+                        :decode packet;
+                        if (_syncIP != _dmxIP) then (true)
+                            :discard packet;
+                            (A)
+                            detach
+                        endif
+                        if(_syncMode == sync) then (false)
+                            :_syncMode = sync;
+                        else (true)
+                        endif
+                        :callback_artDmx()
+                        with last dmx data;<<output>>
+                        :reset _timeSinceLastSync;
+                        note right : sync mode times out after 4sec
+                    }
+                
+                case (ArtNzs)
+                    :decode packet;
+                    :callback_artNzs();<<output>>
 
-}
-state "configuring" as systemConf{
-
-}
-state "error" as syserror{
-    state "log error" as syserror_log
-    state "attempt fix" as syserror_fix
-
-    [*] -d-> syserror_log
-    syserror_log -d-> syserror_fix
-    syserror_fix -d-> [*] : fixed or max retry
-    syserror_fix -> syserror_fix : retry
-
-    
-}
-
-[*]  -> systemInit
-systemInit -> systemConf
-systemConf -> systemIdle
-systemIdle -> packetProc
-
-
-systemInit -d-> syserror
-systemConf -d-> syserror
-systemIdle -d-> syserror
-packetProc -d-> syserror
-syserror -d-> [*] : if error ist not correctable terminate
+                case (ArtInput)
+                    partition "_handleArtInput()"{
+                    :decode packet;
+                    :callback_ArtInput();<<output>>
+                    :_send_ArtPollReply();<<output>>
+                }
+                case (ignored packet)
+                    :discard packet;
+                case (unknown)
+                    :discard packet;
+                    :ERROR_PACKET_TYPE_UNKNOWN;
+            endswitch
+            (A)
+            detach
+        }
+    else (false)
+        (A)
+        detach
+    endif
 
 
 
