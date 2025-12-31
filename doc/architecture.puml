@@ -1,0 +1,26 @@
+@startuml architecture
+title Architecture
+    
+    enum StCodes {
+    }
+
+    struct SysConf {
+
+    }
+    
+    abstract class ArtNet {
+        
+    }
+
+    StCodes <-- ArtNet
+    SysConf <-- ArtNet
+
+    
+    class ArtNetNode {
+    }
+    
+    ArtNet <|.. ArtNetNode
+
+    note right of ArtNet: This implements all features\n common to all device types
+
+@enduml
