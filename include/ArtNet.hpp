@@ -14,6 +14,7 @@
 class ArtNet {
 private:
     static constexpr uint8_t artPollPacketLen = 22;
+    static constexpr uint16_t artPollReplyLen = 239;
 
     //some constants
     static constexpr uint8_t ipAddressLen = 4;
@@ -24,6 +25,7 @@ private:
     static constexpr uint16_t minProtVersion = 14;
     static constexpr uint16_t protVersion = 14;
     static constexpr uint8_t artNetIdentLen = 8;
+    static constexpr uint8_t minArtPollReplyLen = 207;
 
     static constexpr uint8_t artNetIdent[artNetIdentLen] = {'A', 'r', 't','-','N','e', 't', 0x00};
     
@@ -84,6 +86,76 @@ private:
     };
 
     /**
+     * @brief enum of possible node report codes
+     * 
+     */
+    enum nodeReportCodes {
+        rcDebug = 0x0000,
+        rcPowerOk = 0x0001,
+        rcPowerFail = 0x0002,
+        rcSocketWr1 = 0x0003,
+        rcParseFail = 0x0004,
+        rcUdpFail = 0x0005,
+        rcShNameOk = 0x0006,
+        rcLoNameOk = 0x0007,
+        rcDmxError = 0x0008,
+        rcDmxUdpFull = 0x0009,
+        rcDmxRxFull = 0x000a,
+        rcSwitchErr = 0x000b,
+        rcConfigErr = 0x000c,
+        rcDmxShort = 0x000d,
+        rcFirmwareFail = 0x000e,
+        rcUserFail = 0x000f,
+        rcFactoryRes = 0x0010,
+    };
+
+    /**
+     * @brief enum with possible indicator states for artNetPollReply
+     * 
+     */
+    enum indicatorStates {
+        isUnkown    = 0b00,
+        isLocate    = 0b01,
+        isMute      = 0b10,
+        isNormal    = 0b11,
+    };
+
+    /**
+     * @brief enum with possible port programming authority codes for artNetPollReply
+     * 
+     */
+    enum portProgAuthorityCodes {
+        ppacUnknown     = 0b00,
+        ppacFrontPanel  = 0b01,
+        ppacNetwork     = 0b10,
+    };
+
+    enum portTypeCodes {
+        ptcDMX512    = 0b000000,
+        ptcMIDI      = 0b000001,
+        ptcAvab      = 0b000010,
+        ptcColortran = 0b000011,
+        ptcADB625    = 0b000100,
+        ptcArtNet    = 0b000101,
+        ptcDali      = 0b000110,
+    };
+
+    enum failSafeStates {
+        fssLastState    = 0b00,
+        fssOutputZero   = 0b01,
+        fssOutputFull   = 0b10,
+        fssPlayScene    = 0b11,
+    };
+
+    enum backgroundQueuePolicys {
+        bqpStatusNone       = 0,
+        bqpStatusAdvisory   = 1,
+        bqpStatusWarning    = 2,
+        bqpStatusError      = 3,
+        bqpDisabled         = 4,
+    };
+
+    /**
      * @brief struct to hold the configuration of the device
      */
     struct configuration {
@@ -110,26 +182,26 @@ private:
     };
 
     struct commonHeader{
-
+        uint8_t ident[artNetIdentLen];
+        uint16_t opCode;
     }__attribute__((__packed__));
-
+    static_assert(sizeof(commonHeader) == 10, "common header has invalid size");
 
     /**
      * @brief packet structure of an artPoll packet
      * 
      */
     struct artPollPacket{
-        uint8_t ident[artNetIdentLen];
-        uint16_t opCode;
+        commonHeader artHeader;
         uint16_t protVer;
         struct{
-            unsigned int padding : 2;
-            unsigned int targetModeEnable : 1;
-            unsigned int VLCEnable : 1;
-            unsigned int diagMsgIsUnicast : 1;
-            unsigned int sendDiagMsg : 1;
-            unsigned int sendReplyOnChange : 1;
-            unsigned int deprecated : 1;
+            unsigned int padding            : 2;
+            unsigned int targetModeEnable   : 1;
+            unsigned int VLCEnable          : 1;
+            unsigned int diagMsgIsUnicast   : 1;
+            unsigned int sendDiagMsg        : 1;
+            unsigned int sendReplyOnChange  : 1;
+            unsigned int deprecated         : 1;
         }__attribute__((__packed__)) flags;
         uint8_t diagPriority;
         uint16_t targetPortAddressTop;
@@ -139,6 +211,115 @@ private:
     }__attribute__((__packed__));
     static_assert(sizeof(artPollPacket) == artPollPacketLen, "artPollPacket has incorrect size");
 
+    struct ArtPollReplyPacket{
+        commonHeader artHeader;
+        uint8_t ipAddress[4];
+        uint16_t port;
+        uint16_t versionInfo;
+        uint8_t netSwitch;
+        uint8_t subSwitch;
+        uint16_t oemCode;
+        uint8_t ubeaVersion;
+        struct {
+            unsigned int indicatorState     : 2;
+            unsigned int portProgAuthority  : 2;
+            unsigned int padding            : 1;
+            unsigned int romBootEnable      : 1;
+            unsigned int rdmAvailable       : 1;
+            unsigned int ubeaPresent        : 1;
+        }__attribute__((__packed__)) status1;
+        uint16_t estaMan;
+        uint8_t portName[18];
+        uint8_t longName[64];
+        uint8_t nodeReport[64];
+        uint16_t numPorts;
+        struct {
+            unsigned int isInput    : 1;
+            unsigned int isOutput   : 1;
+            unsigned int type       : 5;
+        }__attribute__((__packed__)) portTypes[4];
+        struct {
+            unsigned int dataReceived       : 1;
+            unsigned int dmx512HasTestPkg   : 1;
+            unsigned int dmx512HasSIP       : 1;
+            unsigned int dmx512HasTextPkg   : 1;
+            unsigned int inputDisabled      : 1;
+            unsigned int receiveErrors      : 1;
+            unsigned int padding            : 1;
+            unsigned int convertToSacn      : 1;
+        }__attribute__((__packed__)) goodInput[4];
+        struct {
+            unsigned int isActive           : 1;
+            unsigned int dmx512HasTestPkg   : 1;
+            unsigned int dmx512HasSIP       : 1;
+            unsigned int dmx512HasTextPkg   : 1;
+            unsigned int isMergingArtNet    : 1;
+            unsigned int shortCircuitDetect : 1;
+            unsigned int ltpIsMergeMode     : 1;
+            unsigned int convertFromSacn    : 1;
+        }__attribute__((__packed__)) goodOutputA[4];
+        uint8_t swIn[4];
+        uint8_t swOut[4];
+        uint8_t acnPriority;
+        struct {
+            unsigned int macro8Active   : 1;
+            unsigned int macro7Active   : 1;
+            unsigned int macro6Active   : 1;
+            unsigned int macro5Active   : 1;
+            unsigned int macro4Active   : 1;
+            unsigned int macro3Active   : 1;
+            unsigned int macro2Active   : 1;
+            unsigned int macro1Active   : 1;
+        }__attribute__((__packed__)) swMacro;
+        struct {
+            unsigned int remote8Active  : 1;
+            unsigned int remote7Active  : 1;
+            unsigned int remote6Active  : 1;
+            unsigned int remote5Active  : 1;
+            unsigned int remote4Active  : 1;
+            unsigned int remote3Active  : 1;
+            unsigned int remote2Active  : 1;
+            unsigned int remote1Active  : 1;
+        }__attribute__((__packed__)) swRemote;
+        uint8_t spare[3];
+        uint8_t style;
+        uint8_t MAC[6];
+        uint8_t bindIp[4];
+        uint8_t bindIndex;
+        struct {
+            unsigned int supportsRDM        : 1;
+            unsigned int supportsSwitching  : 1;
+            unsigned int isSquawking        : 1;
+            unsigned int sACNSupported      : 1;
+            unsigned int longAddressSupport : 1;
+            unsigned int capableOfDHCP      : 1;
+            unsigned int isDHCPConfigured   : 1;
+            unsigned int supportsWebConf    : 1;
+        }__attribute__((__packed__)) status2;
+        struct {
+            unsigned int rdmDisabled            : 1;
+            unsigned int outputStyleContinuous  : 1;
+            unsigned int discoveryNotRunning    : 1;
+            unsigned int bckgDiscoveryDisabled  : 1;
+            unsigned int padding                : 4;
+        }__attribute__((__packed__)) goodOutputB[4];
+        struct {
+            unsigned int failSafeState          : 2;
+            unsigned int progFailSafeSupported  : 1;
+            unsigned int llrpSupported          : 1;
+            unsigned int portDirSwSupported     : 1;
+            unsigned int rdmNetSupported        : 1;
+            unsigned int bckgQueueSupported     : 1;
+            unsigned int bckgDisConfSupport     : 1;
+        }__attribute__((__packed__)) status3;
+        uint8_t defaultRespUid[6];
+        uint16_t user;
+        uint16_t refreshRate;
+        uint8_t backgroundQueuePolicy;
+        uint8_t Filler[10];
+    }__attribute__((__packed__));
+    static constexpr uint16_t test = sizeof(ArtPollReplyPacket);
+    static_assert(sizeof(ArtPollReplyPacket) == artPollReplyLen, "ArtPollReplyPacket has invalid size");
 
 
 
@@ -159,9 +340,12 @@ private:
      * @exception <packet is too small>
      * @exception <protocol version not supported>
      */
-    void handleArtPoll(void *packet, uint16_t packetLen);
+    void handleArtPoll(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen);
+
+    void sendArtPollReply();
 
     bool (*callback_readNetSwitch)(void);
+    bool (*callback_transmitUdp)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort);
 
 public:
     //constructors
@@ -179,4 +363,15 @@ public:
      * @exception <new address too short> new address too short, address not updated
      */
     void updateIp(uint8_t *newAddress, uint8_t newAdressLen);
+
+    /**
+     * @brief function to handle packets, has to implemented by device type classes
+     * 
+     * @param packet        pointer to the incoming packet
+     * @param packetLen     length of the incomin packet
+     * @param senderIp      pointer to the ip of the sender
+     * @param senderIpLen   number of bytes in the ip of the sender
+     * @param port          port the packet was received on
+     */
+    void virtual handlePacket(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen, uint16_t port);
 };

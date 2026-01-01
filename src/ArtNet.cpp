@@ -13,7 +13,7 @@ void ArtNet::updateIp(uint8_t *newAddress, uint8_t newAddressLen){
 }
 
 
-void ArtNet::handleArtPoll(void *packet, uint16_t packetLen) {
+void ArtNet::handleArtPoll(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen) {
 
     if(packetLen < minArtPollLen){
         throw std::runtime_error("packet is too small");
@@ -26,7 +26,14 @@ void ArtNet::handleArtPoll(void *packet, uint16_t packetLen) {
     }
 
     /**
-     * @TODO: write transmission of reply
+     * @TODO: placeholder for reply transmission -> can throw exception
      * 
      */
+    sendArtPollReply();
+
+}
+
+
+void ArtNet::sendArtPollReply() {
+
 }

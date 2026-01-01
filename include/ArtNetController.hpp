@@ -14,7 +14,15 @@
 
 class ArtNetController : public ArtNet{
 private:
-    /* data */
+    
+    /**
+     * @brief function to handle incoming artPollReplyPacket
+     * 
+     * @param packet pointer to the incoming packet
+     * @param packetLen length of the incoming packet in bytes
+     */
+    void handleArtPollReply(void *packet, uint16_t packetLen);
+    
 public:
     ArtNetController(/* args */);
     ~ArtNetController();
