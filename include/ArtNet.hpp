@@ -14,19 +14,28 @@
 class ArtNet {
 private:
     static constexpr uint16_t libraryVersion = 0;
+    static constexpr uint16_t maxUrlLen = 64;
+    static constexpr uint8_t defaultSupportUrl[34] = "https://github.com/BrokuLP/Artnet";
 
-    static constexpr uint8_t artPollPacketLen = 22;
-    static constexpr uint16_t artPollReplyLen = 239;
+    static constexpr uint8_t artPollPacketLen   = 22;
+    static constexpr uint16_t artIpProgPacketPacketLen   = 239;
+    static constexpr uint8_t artIpProgPacketLen       = 33;
+    static constexpr uint8_t artIpProgReplyLen  = 34;
+    static constexpr uint8_t artAddressPacketLen      = 107;
+    static constexpr uint8_t artDataRequestPacketLen = 40;
+    static constexpr uint8_t artDataReplyPacketLen = 20;
 
-    static constexpr uint8_t ipAddressLen = 4;
-    static constexpr uint8_t macAddressLen = 6;
-    static constexpr uint16_t artNetPort = 0x1936;
-    static constexpr uint8_t artPollTimeOut = 3; //seconds
-    static constexpr uint8_t minArtPollLen = 14;
-    static constexpr uint16_t minProtVersion = 14;
-    static constexpr uint16_t protVersion = 14;
-    static constexpr uint8_t artNetIdentLen = 8;
-    static constexpr uint8_t minArtPollReplyLen = 207;
+    static constexpr uint16_t maxArtDataReplyPayloadLen = 512;
+
+    static constexpr uint8_t ipAddressLen       = 4;
+    static constexpr uint8_t macAddressLen      = 6;
+    static constexpr uint16_t artNetPort        = 0x1936;
+    static constexpr uint8_t artPollTimeOut     = 3; //seconds
+    static constexpr uint8_t minArtPollLen      = 14;
+    static constexpr uint16_t minProtVersion    = 14;
+    static constexpr uint16_t protVersion       = 14;
+    static constexpr uint8_t artNetIdentLen     = 8;
+    static constexpr uint8_t minArtIpProgPacketLen = 207;
 
     static constexpr uint8_t artNetIdent[artNetIdentLen] = {'A', 'r', 't','-','N','e', 't', 0x00};
 
@@ -159,6 +168,98 @@ private:
     };
 
     /**
+     * @brief possible data requests to be send to the device
+     */
+    enum dataRequestCodes {
+        drPoll = 0x0000,
+        drUrlProduct = 0x0001,
+        drUrlUserGuide = 0x0002,
+        drUrlSupport = 0x0003,
+        drUrlPersUdr = 0x0004,
+        drUrlPersGdtf = 0x0005,
+        drStartManSpec = 0x8000,
+    };
+
+    /**
+     * @brief possible commands to be used in ArtAddressPackets
+     */
+    enum artAddressCommands {
+        acNone          = 0x00,
+        acCancelMerge   = 0x01,
+        acLedNormal     = 0x02,
+        acLedMute       = 0x03,
+        acLedLocate     = 0x04,
+        acResetRxFlags  = 0x05,
+        acAnalysisOn    = 0x06, 
+        acAnalysesOff   = 0x07, 
+        acFailHold      = 0x08,
+        acFailZero      = 0x09,
+        acFailFull      = 0x0a,
+        acFailScene     = 0x0b,
+        acFailRecord    = 0x0c,
+        acMergeLtp0     = 0x10,    
+        acMergeLtp1     = 0x11,
+        acMergeLtp2     = 0x12,
+        acMergeLtp3     = 0x13,
+        acDirectionTx0  = 0x20,
+        acDirectionTx1  = 0x21,
+        acDirectionTx2  = 0x22,
+        acDirectionTx3  = 0x23,
+        acDirectionRx0  = 0x30,
+        acDirectionRx1  = 0x31,
+        acDirectionRx2  = 0x32,
+        acDirectionRx3  = 0x33,
+        acMergeHtp0     = 0x50,
+        acMergeHtp1     = 0x51,
+        acMergeHtp2     = 0x52,
+        acMergeHtp3     = 0x53,
+        acArtNetSel0    = 0x60,
+        acArtNetSel1    = 0x61,
+        acArtNetSel2    = 0x62,
+        acArtNetSel3    = 0x63,
+        acAcnSel0       = 0x70,
+        acAcnSel1       = 0x71,
+        acAcnSel2       = 0x72,
+        acAcnSel3       = 0x73,
+        acClearOp0      = 0x90,
+        acClearOp1      = 0x91,
+        acClearOp2      = 0x92,
+        acClearOp3      = 0x93,
+        acStyleDelta0   = 0xa0,
+        acStyleDelta1   = 0xa1,
+        acStyleDelta2   = 0xa2,
+        acStyleDelta3   = 0xa3,
+        acStyleConst0   = 0xb0,
+        acStyleConst1   = 0xb1,
+        acStyleConst2   = 0xb2,
+        acStyleConst3   = 0xb3,
+        acRdmEnable0    = 0xc0,
+        acRdmEnable1    = 0xc1,
+        acRdmEnable2    = 0xc2,
+        acRdmEnable3    = 0xc3,
+        acRdmDisable0   = 0xd0,
+        acRdmDisable1   = 0xd1,
+        acRdmDisable2   = 0xd2,
+        acRdmDisable3   = 0xd3,
+        acBqp0          = 0xe0,
+        acBqp1          = 0xe1,
+        acBqp2          = 0xe2,
+        acBqp3          = 0xe3,
+        acBqp4          = 0xe4,
+        acBqp5          = 0xe5,
+        acBqp6          = 0xe6,
+        acBqp7          = 0xe7,
+        acBqp8          = 0xe8,
+        acBqp9          = 0xe9,
+        acBqp10         = 0xea,
+        acBqp11         = 0xeb,
+        acBqp12         = 0xec,
+        acBqp13         = 0xed,
+        acBqp14         = 0xee,
+        acBqp15         = 0xef,
+    };
+
+    /**
      * @brief configuration of a specific port on the node
      */
     struct portConfig {
@@ -171,6 +272,11 @@ private:
      * @brief struct to hold the configuration of the device
      */
     struct configuration {
+        uint8_t urlProduct[maxUrlLen];
+        uint8_t urlUserGuide[maxUrlLen];
+        uint8_t urlSupport[maxUrlLen];
+        uint8_t urlPersGdtf[maxUrlLen];
+        uint8_t urlPersUdr[maxUrlLen];
         portConfig ports[4];
         uint8_t ipAddress[ipAddressLen];
         uint8_t macAddress[macAddressLen];
@@ -324,8 +430,82 @@ private:
         uint8_t backgroundQueuePolicy;
         uint8_t Filler[10];
     }__attribute__((__packed__));
-    static constexpr uint16_t test = sizeof(ArtPollReplyPacket);
-    static_assert(sizeof(ArtPollReplyPacket) == artPollReplyLen, "ArtPollReplyPacket has invalid size");
+    static_assert(sizeof(ArtPollReplyPacket) == artIpProgPacketPacketLen, "ArtPollReplyPacket has invalid size");
+
+    struct ArtIpProgPacket {
+        commonHeader artHeader;
+        uint16_t protVersion;
+        uint8_t filler[2];
+        struct {
+            unsigned int programmingEnable  : 1;
+            unsigned int dhcpEnable         : 1;
+            unsigned int padding            : 1;
+            unsigned int progDefaultGateWay : 1;
+            unsigned int resetToDefault     : 1;
+            unsigned int programIpAddress   : 1;
+            unsigned int programSubNetMask  : 1;
+            unsigned int programPort        : 1;
+        }__attribute__((__packed__)) command;
+        uint8_t filler4;
+        uint8_t progIp[4];
+        uint8_t progSm[4];
+        uint8_t progDg[4];
+        uint8_t spare[5];
+    }__attribute__((__packed__));
+    static_assert(sizeof(ArtIpProgPacket) == artIpProgPacketLen, "ArtIpProgPacket has invalid size");
+    
+    struct ArtIpProgReply{
+        commonHeader artHeader;
+        uint16_t protVersion;
+        uint8_t filler[4];
+        uint8_t progIp[4];
+        uint8_t progSm[4];
+        uint16_t progPort; //deprecated
+        struct {
+            unsigned int padding        : 1;
+            unsigned int dhcpEnabled    : 1;
+            unsigned int padding1       : 6;
+        }__attribute__((__packed__)) status;
+        uint8_t spare2;
+        uint8_t progDg[4];
+        uint8_t spare3[2];
+    }__attribute__((__packed__));
+    static_assert(sizeof(ArtIpProgReply) == artIpProgReplyLen, "ArtIpProgReply has invalid size");
+
+    struct ArtAddressPacket {
+        commonHeader artHeader;
+        uint16_t protVersion;
+        uint8_t netSwitch;
+        uint8_t bindIndex;
+        uint8_t portName[18];
+        uint8_t longName[64];
+        uint8_t swIn[4];
+        uint8_t swOut[4];
+        uint8_t subSwitch;
+        uint8_t acnPriority;
+        uint8_t command;
+    }__attribute__((__packed__));
+    static_assert(sizeof(ArtAddressPacket) == artAddressPacketLen, "ArtAddressPacket has invalid size");
+    
+    struct ArtDataRequestPacket {
+        commonHeader artHeader;
+        uint16_t protVersion;
+        uint16_t estaMan;
+        uint16_t oemCode;
+        uint16_t request;
+        uint8_t spare[22];
+    }__attribute__((__packed__));
+    static_assert(sizeof(ArtDataRequestPacket) == artDataRequestPacketLen, "ArtDataRequestPacket has invalid size");
+
+    struct ArtDataReplyPacket {
+        commonHeader artHeader;
+        uint16_t protVersion;
+        uint16_t estaMan;
+        uint16_t oemCode;
+        uint16_t request;
+        uint16_t payloadLen;
+    }__attribute__((__packed__));
+    static_assert(sizeof(ArtDataReplyPacket) == artDataReplyPacketLen, "artDataReplyPacket has invalid size");
 
     //private storage stuff
     struct configuration sysConf;
@@ -368,7 +548,7 @@ public:
     //constructors
     ArtNet(ArtNet &other) = delete;
     ArtNet(ArtNet &&other) = delete;
-    ArtNet(uint16_t oemCode);
+    ArtNet(uint16_t oemCode, uint8_t *MAC, uint8_t MACLen);
     ~ArtNet();
 
     /**

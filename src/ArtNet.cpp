@@ -38,6 +38,10 @@ void ArtNet::setDefaultIp() {
 
     sysConf.ipAddress[2] = sysConf.macAddress[4];
     sysConf.ipAddress[3] = sysConf.macAddress[5];
+
+    /**
+     * @TODO: add function to update network stack + subnet mask
+     */
 };
 
 
