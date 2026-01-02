@@ -23,7 +23,11 @@ private:
      */
     void handleArtPollReply(void *packet, uint16_t packetLen);
 
+    bool (*callback_broadcast)(uint8_t *packet, uint8_t packetLen, uint16_t port);
+
 public:
-    ArtNetController(/* args */);
+    ArtNetController();
+    ArtNetController(ArtNetController &other) = default;
+    ArtNetController(ArtNetController &&other) = default;
     ~ArtNetController();
 };

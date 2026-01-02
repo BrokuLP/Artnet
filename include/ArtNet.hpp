@@ -15,7 +15,7 @@ class ArtNet {
 private:
     static constexpr uint16_t libraryVersion = 0;
     static constexpr uint16_t maxUrlLen = 64;
-    static constexpr uint8_t defaultSupportUrl[34] = "https://github.com/BrokuLP/Artnet";
+    static_assert(maxUrlLen >= sizeof("https://github.com/BrokuLP/Artnet"), "default url must be shorter than maxUrlLen");
 
     static constexpr uint8_t artPollPacketLen   = 22;
     static constexpr uint16_t artIpProgPacketPacketLen   = 239;
@@ -272,11 +272,11 @@ private:
      * @brief struct to hold the configuration of the device
      */
     struct configuration {
-        uint8_t urlProduct[maxUrlLen];
-        uint8_t urlUserGuide[maxUrlLen];
-        uint8_t urlSupport[maxUrlLen];
-        uint8_t urlPersGdtf[maxUrlLen];
-        uint8_t urlPersUdr[maxUrlLen];
+        uint8_t urlProduct[maxUrlLen] = "https://github.com/BrokuLP/Artnet";
+        uint8_t urlUserGuide[maxUrlLen] = "https://github.com/BrokuLP/Artnet";
+        uint8_t urlSupport[maxUrlLen] = "https://github.com/BrokuLP/Artnet";
+        uint8_t urlPersGdtf[maxUrlLen] = "https://github.com/BrokuLP/Artnet";
+        uint8_t urlPersUdr[maxUrlLen] = "https://github.com/BrokuLP/Artnet";
         portConfig ports[4];
         uint8_t ipAddress[ipAddressLen];
         uint8_t macAddress[macAddressLen];
@@ -291,6 +291,7 @@ private:
         bool sendDiagAsUnicast;
         bool sendDiagostic;
         bool sendReplyOnChange;
+        bool dhcpEnabled;
     };
 
     struct commonHeader{
@@ -527,6 +528,16 @@ private:
     void handleArtPoll(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen);
 
     /**
+     * @brief function to handle artProg packets, does not support reprogramming of port
+     * 
+     * @param packet pointer to the incoming packet
+     * @param packetLen length of the incoming packet in bytes
+     * 
+     * @exception <packet is too small>
+     * @exception <protocol version not supported>
+     */
+    void handleArtProg(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen);
+    /**
      * @brief function to transmit an ArtNetPollReply packet
      * 
      * @param targetIp the IPv4 of the controller to respond to
@@ -536,13 +547,30 @@ private:
      */
     void sendArtPollReply(uint8_t *targetIp, uint8_t targetIpLen);
 
-    bool (*callback_readNetSwitch)(void) = nullptr;
-    bool (*callback_transmitUdp)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort) = nullptr;
+    /**
+     * @brief function to transmit an artIpProgReplyPacket
+     * 
+     * @param targetIp 
+     * @param targetIpLen 
+     * @return true 
+     * @return false 
+     */
+    bool sendArtIpProgReply(uint8_t *targetIp, uint8_t targetIpLen);
 
     /**
      * @brief function to check if all required parameters are configured
      */
     bool isConfigured();
+
+    void enableDHCP(bool enable);
+
+
+    bool (*callback_readNetSwitch)(void) = nullptr;
+    bool (*callback_unicast)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort) = nullptr;
+    bool (*callback_updateIpAddress)(uint8_t *address, uint8_t addressLen);
+    bool (*callback_updateSubNetMask)(uint8_t *mask, uint8_t maskLen);
+    bool (*callback_updateGateWay)(uint8_t *gateWay, uint8_t gateWayLen);
+    void (*callback_getNetworkConf)(uint8_t *adr, uint8_t *mask, uint8_t *gateWay, uint8_t bufLen);
 
 public:
     //constructors

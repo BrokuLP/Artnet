@@ -16,6 +16,15 @@
 class ArtNetNode : public ArtNet{
 private:
 
+    /**
+     * @brief function pointer to output dmx data to the corresponding port
+     * @param dmxData dmx data to output
+     * @param dmxDataSize number of channels of dmx data
+     * @param portIdx port to output data on, valid range 0:3
+     * @retval true -> succeeded to output data
+     * @retval false -> failed to output data
+     */
+    bool (*callback_outputDmx)(uint8_t *dmxData, uint16_t dmxDataSize, uint8_t portIdx);
 public:
     ArtNetNode();
     ArtNetNode(ArtNetNode &other) = delete;
