@@ -12,7 +12,7 @@
 
 
 
-class ArtNetController : public ArtNet{
+class ArtNetController : private ArtNet{
 private:
     
     /**
@@ -22,7 +22,7 @@ private:
      * @param packetLen length of the incoming packet in bytes
      */
     void handleArtPollReply(void *packet, uint16_t packetLen);
-    
+
 public:
     ArtNetController(/* args */);
     ~ArtNetController();

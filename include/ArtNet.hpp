@@ -13,10 +13,11 @@
 
 class ArtNet {
 private:
+    static constexpr uint16_t libraryVersion = 0;
+
     static constexpr uint8_t artPollPacketLen = 22;
     static constexpr uint16_t artPollReplyLen = 239;
 
-    //some constants
     static constexpr uint8_t ipAddressLen = 4;
     static constexpr uint8_t macAddressLen = 6;
     static constexpr uint16_t artNetPort = 0x1936;
@@ -28,6 +29,8 @@ private:
     static constexpr uint8_t minArtPollReplyLen = 207;
 
     static constexpr uint8_t artNetIdent[artNetIdentLen] = {'A', 'r', 't','-','N','e', 't', 0x00};
+
+    const uint16_t oemCode;
     
     /**
      * @brief enum of all possible style codes
@@ -46,43 +49,43 @@ private:
      * @brief enum of possible opCodes
      */
     enum opCodes {
-        opPoll          = 0x2000,
-        opPollReply     = 0x2100,
-        opDiagData      = 0x2300,
-        opCommand       = 0x2400,
-        opDataRequest   = 0x2700,
-        opDataReply     = 0x2800,
-        opDmx = 0x5000,
-        opNzs = 0x5100,
-        opSync = 0x5200,
-        opAddress = 0x6000,
-        opInput = 0x7000,
-        opTodRequest = 0x8000,
-        opTodData = 0x8100,
-        opTodControl = 0x8200,
-        opRdm = 0x8300,
-        opRdmSub = 0x8400,
-        opVideoSetup = 0xa010,
-        opVideoPalette = 0xa020,
-        opVideoData = 0xa040,
-        opMacMaster = 0xf000, //deprecated
-        opMacSlave = 0xf100, //deprecated
-        opFirmwareMaster = 0xf200,
-        opFirmwareReply = 0xf300,
-        opFileTnMaster = 0xf400,
-        opFileFnMaster = 0xf500,
-        opFileFnReply = 0xf600,
-        opIpProg = 0xf800,
-        opIpProgReply = 0xf900,
-        opMedia = 0x9000,
-        opMediaPatch = 0x9100,
-        opMediaControl = 0x9200,
+        opPoll              = 0x2000,
+        opPollReply         = 0x2100,
+        opDiagData          = 0x2300,
+        opCommand           = 0x2400,
+        opDataRequest       = 0x2700,
+        opDataReply         = 0x2800,
+        opDmx               = 0x5000,
+        opNzs               = 0x5100,
+        opSync              = 0x5200,
+        opAddress           = 0x6000,
+        opInput             = 0x7000,
+        opTodRequest        = 0x8000,
+        opTodData           = 0x8100,
+        opTodControl        = 0x8200,
+        opRdm               = 0x8300,
+        opRdmSub            = 0x8400,
+        opVideoSetup        = 0xa010,
+        opVideoPalette      = 0xa020,
+        opVideoData         = 0xa040,
+        opMacMaster         = 0xf000, //deprecated
+        opMacSlave          = 0xf100, //deprecated
+        opFirmwareMaster    = 0xf200,
+        opFirmwareReply     = 0xf300,
+        opFileTnMaster      = 0xf400,
+        opFileFnMaster      = 0xf500,
+        opFileFnReply       = 0xf600,
+        opIpProg            = 0xf800,
+        opIpProgReply       = 0xf900,
+        opMedia             = 0x9000,
+        opMediaPatch        = 0x9100,
+        opMediaControl      = 0x9200,
         opMediaControlReply = 0x9300,
-        opTimeCode = 0x9700,
-        opTimeSync = 0x9800,
-        opTrigger = 0x9900,
-        opDirectory = 0x9a00,
-        opDirectoryReply = 0x9b00,
+        opTimeCode          = 0x9700,
+        opTimeSync          = 0x9800,
+        opTrigger           = 0x9900,
+        opDirectory         = 0x9a00,
+        opDirectoryReply    = 0x9b00,
     };
 
     /**
@@ -90,23 +93,23 @@ private:
      * 
      */
     enum nodeReportCodes {
-        rcDebug = 0x0000,
-        rcPowerOk = 0x0001,
-        rcPowerFail = 0x0002,
-        rcSocketWr1 = 0x0003,
-        rcParseFail = 0x0004,
-        rcUdpFail = 0x0005,
-        rcShNameOk = 0x0006,
-        rcLoNameOk = 0x0007,
-        rcDmxError = 0x0008,
-        rcDmxUdpFull = 0x0009,
-        rcDmxRxFull = 0x000a,
-        rcSwitchErr = 0x000b,
-        rcConfigErr = 0x000c,
-        rcDmxShort = 0x000d,
-        rcFirmwareFail = 0x000e,
-        rcUserFail = 0x000f,
-        rcFactoryRes = 0x0010,
+        rcDebug         = 0x0000,
+        rcPowerOk       = 0x0001,
+        rcPowerFail     = 0x0002,
+        rcSocketWr1     = 0x0003,
+        rcParseFail     = 0x0004,
+        rcUdpFail       = 0x0005,
+        rcShNameOk      = 0x0006,
+        rcLoNameOk      = 0x0007,
+        rcDmxError      = 0x0008,
+        rcDmxUdpFull    = 0x0009,
+        rcDmxRxFull     = 0x000a,
+        rcSwitchErr     = 0x000b,
+        rcConfigErr     = 0x000c,
+        rcDmxShort      = 0x000d,
+        rcFirmwareFail  = 0x000e,
+        rcUserFail      = 0x000f,
+        rcFactoryRes    = 0x0010,
     };
 
     /**
@@ -156,29 +159,32 @@ private:
     };
 
     /**
+     * @brief configuration of a specific port on the node
+     */
+    struct portConfig {
+        uint8_t universe;
+        bool isInput;
+        bool isOutput;
+    };
+
+    /**
      * @brief struct to hold the configuration of the device
      */
     struct configuration {
+        portConfig ports[4];
         uint8_t ipAddress[ipAddressLen];
         uint8_t macAddress[macAddressLen];
         styleCodes deviceStyle;
+        uint16_t oemCode;
+        uint8_t subSwitch;
+        uint8_t netSwitch;
         uint8_t bindIndex;
         uint8_t diagnosticPriority;
-        uint16_t oemCode;
         bool targetModeActive;
         bool VLCActive;
         bool sendDiagAsUnicast;
         bool sendDiagostic;
         bool sendReplyOnChange;
-    };
-
-    /**
-     * @brief struct representing the full address of a port
-     */
-    struct portAddress{
-        unsigned int net        : 7;
-        unsigned int subNet     : 4;
-        unsigned int universe   : 4;
     };
 
     struct commonHeader{
@@ -321,8 +327,6 @@ private:
     static constexpr uint16_t test = sizeof(ArtPollReplyPacket);
     static_assert(sizeof(ArtPollReplyPacket) == artPollReplyLen, "ArtPollReplyPacket has invalid size");
 
-
-
     //private storage stuff
     struct configuration sysConf;
 
@@ -342,7 +346,15 @@ private:
      */
     void handleArtPoll(void *packet, uint16_t packetLen, uint8_t *senderIp, uint8_t senderIpLen);
 
-    void sendArtPollReply();
+    /**
+     * @brief function to transmit an ArtNetPollReply packet
+     * 
+     * @param targetIp the IPv4 of the controller to respond to
+     * @param targetIpLen number of bytes in the controller IP
+     * 
+     * @exception <failed to transmit packet> -> udp transmission callback returned an error
+     */
+    void sendArtPollReply(uint8_t *targetIp, uint8_t targetIpLen);
 
     bool (*callback_readNetSwitch)(void);
     bool (*callback_transmitUdp)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort);
