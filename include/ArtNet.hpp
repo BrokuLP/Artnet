@@ -356,14 +356,19 @@ private:
      */
     void sendArtPollReply(uint8_t *targetIp, uint8_t targetIpLen);
 
-    bool (*callback_readNetSwitch)(void);
-    bool (*callback_transmitUdp)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort);
+    bool (*callback_readNetSwitch)(void) = nullptr;
+    bool (*callback_transmitUdp)(uint8_t *packet, uint16_t packetLen, uint8_t *targetIp, uint8_t targetIpLen, uint16_t targetPort) = nullptr;
+
+    /**
+     * @brief function to check if all required parameters are configured
+     */
+    bool isConfigured();
 
 public:
     //constructors
     ArtNet(ArtNet &other) = delete;
     ArtNet(ArtNet &&other) = delete;
-    ArtNet();
+    ArtNet(uint16_t oemCode);
     ~ArtNet();
 
     /**
